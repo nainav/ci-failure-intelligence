@@ -78,3 +78,57 @@ flowchart LR
   C --> D[Analyzer<br/>(flake scoring + classification)]
   D --> E[Dashboard<br/>(Streamlit)]
   D --> F[Alerts (optional)<br/>Slack / Email]
+
+  
+Design goals:
+- Simple, observable, explainable
+- Fast local setup
+- CI-first integration
+- Clear separation of ingestion, analysis, and presentation
+
+---
+
+## Tech Stack
+
+- **Backend:** Python, FastAPI
+- **Testing:** Pytest, JUnit XML
+- **Database:** PostgreSQL
+- **Dashboard:** Streamlit
+- **CI:** GitHub Actions (Jenkins-compatible)
+- **Infra:** Docker, Docker Compose  
+- **Optional:** Kubernetes (local)
+
+---
+
+## Getting Started (Local Demo)
+
+### Prerequisites
+- Docker
+- Docker Compose
+- Python 3.10+ (optional for local dev)
+
+### Run the Platform
+```bash
+docker compose up --build
+- name: Run tests
+  run: pytest --junitxml=results.xml
+
+- name: Upload test results
+  run: |
+    curl -X POST http://localhost:8000/ingest/junit \
+      -F "file=@results.xml" \
+      -F "commit_sha=${{ github.sha }}" \
+      -F "branch=${{ github.ref_name }}"
+
+---
+
+Disclaimer
+
+This project is a portfolio and learning platform designed to demonstrate CI/CD reliability engineering concepts.
+It is not a drop-in replacement for enterprise CI observability tools, but it reflects real-world design tradeoffs and system thinking.
+
+Author
+
+Built by Naina Verma
+Staff Quality Engineer focused on CI/CD reliability, test automation, and platform engineering.
+
