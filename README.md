@@ -121,13 +121,13 @@ docker compose up --build
       -F "branch=${{ github.ref_name }}"
 
 ---
-
-Disclaimer
+```
+### Disclaimer
 
 This project is a portfolio and learning platform designed to demonstrate CI/CD reliability engineering concepts.
 It is not a drop-in replacement for enterprise CI observability tools, but it reflects real-world design tradeoffs and system thinking.
 
-Author
+### Author
 
 Built by Naina Verma
 Staff Quality Engineer focused on CI/CD reliability, test automation, and platform engineering.
