@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  api:
+    build: ./apps/api
+    container_name: ci_failure_intel_api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://ci_user:ci_pass@db:5432/ci_intel
+    depends_on:
+      - db
+    volumes:
+      - ./apps/api:/app
+    command: >
+      uvicorn main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+
+  db:
+    image: postgres:15
+    container_name: ci_failure_intel_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ci_user
+      POSTGRES_PASSWORD: ci_pass
+      POSTGRES_DB: ci_intel
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:
