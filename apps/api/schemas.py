@@ -30,3 +30,37 @@ class RunOut(BaseModel):
     finished_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class TestCaseOut(BaseModel):
+    id: int
+    nodeid: str
+    suite: str | None
+    file_path: str | None
+    owner: str | None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TestExecutionOut(BaseModel):
+    id: int
+    run_id: int
+    test_case_id: int
+    outcome: str
+    duration_sec: float | None
+    failure_type: str | None
+    error_hash: str | None
+    error_message: str | None
+    reason_code: str | None
+    classified_as: str | None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class IngestResponse(BaseModel):
+    run_id: int
+    tests_ingested: int
