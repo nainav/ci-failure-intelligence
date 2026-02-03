@@ -54,7 +54,7 @@ jobs:
             -F "run_external_id=${{ github.run_id }}" \
             -F "status=unknown"
 
-      - name: Debug: list ingested runs
+      - name: list ingested runs
         run: |
           curl -s http://localhost:8000/runs || true
           curl -s http://localhost:8000/tests || true
