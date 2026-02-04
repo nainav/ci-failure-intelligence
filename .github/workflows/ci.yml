@@ -13,19 +13,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      
       - name: Build & start platform (API + Postgres)
         run: |
           docker compose up -d --build
+          docker compose ps
+
           # wait for API
-          for i in {1..30}; do
+          for i in {1..45}; do
             if curl -sSf http://localhost:8000/health > /dev/null; then
               echo "API is up"
-              break
+              exit 0
             fi
             echo "Waiting for API..."
             sleep 2
           done
+
+          echo "API did not become healthy in time"
+          docker compose logs api --no-color | tail -n 200
+          docker compose logs db --no-color | tail -n 200
+          exit 1
 
       - name: Set up Python
         uses: actions/setup-python@v5
