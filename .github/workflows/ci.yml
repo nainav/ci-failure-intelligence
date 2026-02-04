@@ -1,0 +1,74 @@
+name: ci
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test-and-ingest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Build & start platform (API + Postgres)
+        run: |
+          docker compose up -d --build
+          docker compose ps
+
+          # wait for API
+          for i in {1..45}; do
+            if curl -sSf http://localhost:8000/health > /dev/null; then
+              echo "API is up"
+              exit 0
+            fi
+            echo "Waiting for API..."
+            sleep 2
+          done
+
+          echo "API did not become healthy in time"
+          docker compose logs api --no-color | tail -n 200
+          docker compose logs db --no-color | tail -n 200
+          exit 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Run tests and generate JUnit XML
+        run: |
+          pytest -q --junitxml=results.xml tests/sample_suite || true
+
+      - name: Upload JUnit to CI Failure Intelligence
+        env:
+          API_URL: ${{ secrets.API_URL }}
+        run: |
+          curl -sSf -X POST "${API_URL}/ingest/junit" \
+            -F "file=@results.xml" \
+            -F "provider=github" \
+            -F "workflow=${{ github.workflow }}" \
+            -F "repo=${{ github.repository }}" \
+            -F "branch=${{ github.ref_name }}" \
+            -F "commit_sha=${{ github.sha }}" \
+            -F "run_external_id=${{ github.run_id }}" \
+            -F "status=unknown"
+
+      - name: list ingested runs
+        run: |
+          curl -s http://localhost:8000/runs || true
+          curl -s http://localhost:8000/tests || true
+          curl -s "http://localhost:8000/executions?limit=20" || true
+
+      - name: Tear down
+        if: always()
+        run: |
+          docker compose down -v
