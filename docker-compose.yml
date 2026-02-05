@@ -28,6 +28,20 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+  dashboard:
+    build: ./apps/dashboard
+    container_name: ci_failure_intel_dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      API_URL: http://api:8000
+    depends_on:
+      - api
+    volumes:
+      - ./apps/dashboard:/app
+
 
 volumes:
   pg_data:
+
+
