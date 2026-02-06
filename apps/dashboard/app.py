@@ -92,6 +92,25 @@ else:
                          use_container_width=True, height=300)
 
 st.divider()
+st.divider()
+st.subheader("Flaky Test Leaderboard")
+
+flakes = fetch_json("/flakes")
+flakes_df = safe_df(flakes)
+
+if flakes_df.empty:
+    st.info("No flaky tests detected yet. Run CI a few more times.")
+else:
+    st.dataframe(
+        flakes_df,
+        use_container_width=True,
+        height=300
+    )
+
+    st.caption(
+        "Flake score = outcome changes / (executions - 1). "
+        "Higher score means more unstable."
+    )
 
 # ---- Drilldown: executions by run ----
 st.subheader("Drilldown: Executions by Run")

@@ -10,6 +10,8 @@ from schemas import (
     IngestResponse
 )
 from junit_parser import parse_junit_xml
+from sqlalchemy import func
+from collections import defaultdict
 
 app = FastAPI(title="CI Failure Intelligence")
 
@@ -170,3 +172,53 @@ def list_executions(
         stmt = stmt.where(TestExecution.test_case_id == test_case_id)
     stmt = stmt.limit(limit)
     return list(db.scalars(stmt).all())
+
+@app.get("/flakes")
+def list_flaky_tests(
+    db: Session = Depends(get_db),
+    window: int = 20,
+    min_executions: int = 5,
+    limit: int = 20,
+):
+    """
+    Returns flaky tests ranked by flake_score.
+    """
+    # Get recent executions per test
+    executions = (
+        db.query(
+            TestExecution.test_case_id,
+            TestExecution.outcome,
+            TestExecution.created_at,
+        )
+        .order_by(TestExecution.test_case_id, TestExecution.created_at.desc())
+        .all()
+    )
+
+    by_test = defaultdict(list)
+    for test_case_id, outcome, _ in executions:
+        by_test[test_case_id].append(outcome)
+
+    results = []
+
+    for test_case_id, outcomes in by_test.items():
+        recent = outcomes[:window]
+        if len(recent) < min_executions:
+            continue
+
+        changes = sum(
+            1 for i in range(1, len(recent)) if recent[i] != recent[i - 1]
+        )
+
+        flake_score = changes / (len(recent) - 1)
+
+        results.append(
+            {
+                "test_case_id": test_case_id,
+                "executions": len(recent),
+                "outcome_changes": changes,
+                "flake_score": round(flake_score, 3),
+            }
+        )
+
+    results.sort(key=lambda r: r["flake_score"], reverse=True)
+    return results[:limit]
